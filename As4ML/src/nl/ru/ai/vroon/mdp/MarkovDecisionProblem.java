@@ -12,63 +12,63 @@ import javax.swing.JFrame;
  * Also contains and updates an agent that can roam around in the MDP.
  */
 public class MarkovDecisionProblem {
+	private static Random						rand		= new Random();
 	// FIELDS //
 	private DrawFrame							frame		= null;
 	private ArrayList<ArrayList<FieldPlusVal>>	landscape	= new ArrayList<ArrayList<FieldPlusVal>>();
-	private static Random						rand		= new Random();
-
-	private int									width, height;
-	private int									xPosition, yPosition;
-	private int									initXPos, initYPos;
-	private int									waittime;
-	private int									actionsCounter;
+	
+	private int		width, height;
+	private int		xPosition, yPosition;
+	private int		initXPos, initYPos;
+	private int		waittime;
+	private int		actionsCounter;
 	// probabilities:
-	private double								pPerform;
-	private double								pSidestep;
-	private double								pBackstep;
-	private double								pNoStep;
+	private double	pPerform;
+	private double	pSidestep;
+	private double	pBackstep;
+	private double	pNoStep;
 	// rewards, discount, etc
-	private double								posReward;
-	private double								negReward;
-	private double								noReward;
-	private double								discountFact;
-	private double								minChange;
-
-	private boolean								showProgress;
-	private boolean								isDeterministic;
-	private boolean								terminated;
-
+	private double	posReward;
+	private double	negReward;
+	private double	noReward;
+	private double	discountFact;
+	private double	minChange;
+	
+	private boolean	showProgress;
+	private boolean	isDeterministic;
+	private boolean	terminated;
+	
 	// FUNCTIONS //
-
+	
 	/**
 	 * Constructor. Constructs a basic MDP (the one described in Chapter 17 of Russell & Norvig)
 	 */
 	public MarkovDecisionProblem() {
 		this.defaultSettings();
-
+		
 		this.width = 4;
 		this.height = 3;
-
+		
 		// Make and fill the fields:
 		// landscape = new Field[width][height];
 		this.initField();
 		this.setField(1, 1, Field.OBSTACLE);
 		this.setField(3, 1, Field.NEGREWARD);
 		this.setField(3, 2, Field.REWARD);
-
+		
 		// for (int i = 0; i < height; i++ )
 		// for (int j = 0; j < width; j++ )
 		// landscape[j][i] = Field.EMPTY;
 		// setField(1, 1, Field.OBSTACLE);
 		// setField(3, 1, Field.NEGREWARD);
 		// setField(3, 2, Field.REWARD);
-
+		
 		this.setStateValues();
-
+		
 		// Draw yourself:
 		this.pDrawMDP();
 	}
-
+	
 	/**
 	 * Constructs a basic MDP with the given width and height.
 	 * All fields are set to Field.EMPTY.
@@ -80,10 +80,10 @@ public class MarkovDecisionProblem {
 	 */
 	public MarkovDecisionProblem(int width, int height) {
 		this.defaultSettings();
-
+		
 		this.width = width;
 		this.height = height;
-
+		
 		// Make and fill the fields:
 		this.initField();
 		// landscape = new Field[this.width][this.height];
@@ -93,10 +93,10 @@ public class MarkovDecisionProblem {
 		//
 		this.setField(0, 3, Field.REWARD);
 		this.setStateValues();
-
+		
 		this.pDrawMDP();
 	}
-
+	
 	public void bestAction() {
 		FieldPlusVal curFPV = this.landscape.get(this.xPosition).get(this.yPosition);
 		while (curFPV.getMyField() == Field.EMPTY) {
@@ -105,7 +105,7 @@ public class MarkovDecisionProblem {
 			curFPV = this.landscape.get(this.xPosition).get(this.yPosition);
 		}
 	}
-
+	
 	public void calcQ(ArrayList<ArrayList<FieldPlusVal>> copyScape, FieldPlusVal thisOne, int x, int y) {
 		// System.out.println("L:" + thisOne.getActionLeft() + "R:" + thisOne.getActionRight() + "U:" + thisOne.getActionUp() + "D:"
 		// + thisOne.getActionDown());
@@ -121,55 +121,55 @@ public class MarkovDecisionProblem {
 			if (x >= 0) {
 				if ( (x == 0) || (copyScape.get(x - 1).get(y).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x - 1).get(y).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += (this.pPerform * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x)
-							.get(y).getMyVal())));
+					returnVal += (this.pPerform
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
-					returnVal += (this.pPerform * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x - 1)
-							.get(y).getMyVal())));
+					returnVal += (this.pPerform
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x - 1).get(y).getMyVal())));
 				}
-
+				
 			}
 			if (y >= 0) {
 				if ( (y == 0) || (copyScape.get(x).get(y - 1).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x).get(y - 1).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x).get(y).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x).get(y - 1).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y - 1).getMyVal())));
 				}
-
+				
 			}
 			if (y <= (this.height - 1)) {
 				if ( (y == (this.height - 1)) || (copyScape.get(x).get(y + 1).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x).get(y + 1).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x).get(y).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x).get(y + 1).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y + 1).getMyVal())));
 				}
-
+				
 			}
 			if (x <= (this.width - 1)) {
 				if ( (x == (this.width - 1)) || (copyScape.get(x + 1).get(y).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x + 1).get(y).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += (this.pBackstep * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x)
-							.get(y).getMyVal())));
+					returnVal += (this.pBackstep
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
-					returnVal += (this.pBackstep * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x + 1)
-							.get(y).getMyVal())));
+					returnVal += (this.pBackstep
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x + 1).get(y).getMyVal())));
 				}
-
+				
 			}
 			if (true) {
-				returnVal += (this.pNoStep * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y)
-						.getMyVal())));
-
+				returnVal += (this.pNoStep
+						* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
+						
 			}
 			thisOne.setActionLeft(returnVal);
 			returnVal = 0;
@@ -177,55 +177,55 @@ public class MarkovDecisionProblem {
 			if (x <= (this.width - 1)) {
 				if ( (x == (this.width - 1)) || (copyScape.get(x + 1).get(y).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x + 1).get(y).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += (this.pPerform * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x)
-							.get(y).getMyVal())));
+					returnVal += (this.pPerform
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
-					returnVal += (this.pPerform * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x + 1)
-							.get(y).getMyVal())));
+					returnVal += (this.pPerform
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x + 1).get(y).getMyVal())));
 				}
-
+				
 			}
 			if (y >= 0) {
 				if ( (y == 0) || (copyScape.get(x).get(y - 1).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x).get(y - 1).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x).get(y).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x).get(y - 1).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y - 1).getMyVal())));
 				}
-
+				
 			}
 			if (y <= (this.height - 1)) {
 				if ( (y == (this.height - 1)) || (copyScape.get(x).get(y + 1).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x).get(y + 1).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x).get(y).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x).get(y + 1).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y + 1).getMyVal())));
 				}
-
+				
 			}
 			if (x >= 0) {
 				if ( (x == 0) || (copyScape.get(x - 1).get(y).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x - 1).get(y).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += (this.pBackstep * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x)
-							.get(y).getMyVal())));
+					returnVal += (this.pBackstep
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
-					returnVal += (this.pBackstep * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x - 1)
-							.get(y).getMyVal())));
+					returnVal += (this.pBackstep
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x - 1).get(y).getMyVal())));
 				}
-
+				
 			}
 			if (true) {
-				returnVal += (this.pNoStep * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y)
-						.getMyVal())));
-
+				returnVal += (this.pNoStep
+						* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
+						
 			}
 			thisOne.setActionRight(returnVal);
 			returnVal = 0;
@@ -233,8 +233,8 @@ public class MarkovDecisionProblem {
 			if (y <= (this.height - 1)) {
 				if ( (y == (this.height - 1)) || (copyScape.get(x).get(y + 1).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x).get(y + 1).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += (this.pPerform * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x)
-							.get(y).getMyVal())));
+					returnVal += (this.pPerform
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
 					double reward = this.getReward(copyScape.get(x).get(y).getMyField());
@@ -242,49 +242,49 @@ public class MarkovDecisionProblem {
 					returnVal += (this.pPerform * (reward + (this.discountFact * V)));
 					// System.out.println("pPer:" + this.pPerform + " rew:" + reward + " dcFct:" + this.discountFact + " V':" + V);
 				}
-
+				
 			}
 			if (x >= 0) {
 				if ( (x == 0) || (copyScape.get(x - 1).get(y).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x - 1).get(y).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x).get(y).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x - 1).get(y).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x - 1).get(y).getMyVal())));
 				}
-
+				
 			}
 			if (x <= (this.width - 1)) {
 				if ( (x == (this.width - 1)) || (copyScape.get(x + 1).get(y).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x + 1).get(y).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x).get(y).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x + 1).get(y).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x + 1).get(y).getMyVal())));
 				}
-
+				
 			}
 			if (y >= 0) {
 				if ( (y == 0) || (copyScape.get(x).get(y - 1).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x).get(y - 1).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += (this.pBackstep * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x)
-							.get(y).getMyVal())));
+					returnVal += (this.pBackstep
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
-					returnVal += (this.pBackstep * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x)
-							.get(y - 1).getMyVal())));
+					returnVal += (this.pBackstep
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y - 1).getMyVal())));
 				}
-
+				
 			}
 			if (true) {
-
-				returnVal += (this.pNoStep * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y)
-						.getMyVal())));
-
+				
+				returnVal += (this.pNoStep
+						* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
+						
 			}
 			thisOne.setActionUp(returnVal);
 			returnVal = 0;
@@ -292,8 +292,8 @@ public class MarkovDecisionProblem {
 			if (y >= 0) {
 				if ( (y == 0) || (copyScape.get(x).get(y - 1).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x).get(y - 1).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += (this.pPerform * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x)
-							.get(y).getMyVal())));
+					returnVal += (this.pPerform
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
 					double reward = this.getReward(copyScape.get(x).get(y).getMyField());
@@ -301,78 +301,78 @@ public class MarkovDecisionProblem {
 					returnVal += (this.pPerform * (reward + (this.discountFact * V)));
 					// System.out.println("pPer:" + this.pPerform + " rew:" + reward + " dcFct:" + this.discountFact + " V':" + V);
 				}
-
+				
 			}
 			if (x >= 0) {
 				if ( (x == 0) || (copyScape.get(x - 1).get(y).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x - 1).get(y).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x).get(y).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x - 1).get(y).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x - 1).get(y).getMyVal())));
 				}
-
+				
 			}
 			if (x <= (this.width - 1)) {
 				if ( (x == (this.width - 1)) || (copyScape.get(x + 1).get(y).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x + 1).get(y).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x).get(y).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
-					returnVal += ( (this.pSidestep / 2) * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape
-							.get(x + 1).get(y).getMyVal())));
+					returnVal += ( (this.pSidestep / 2)
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x + 1).get(y).getMyVal())));
 				}
-
+				
 			}
 			if (y <= (this.height - 1)) {
 				if ( (y == (this.height - 1)) || (copyScape.get(x).get(y + 1).getMyField() == Field.OBSTACLE)
 						|| (copyScape.get(x).get(y + 1).getMyField() == Field.OUTOFBOUNDS)) {
-					returnVal += (this.pBackstep * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x)
-							.get(y).getMyVal())));
+					returnVal += (this.pBackstep
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
 				}
 				else {
-					returnVal += (this.pBackstep * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x)
-							.get(y + 1).getMyVal())));
+					returnVal += (this.pBackstep
+							* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y + 1).getMyVal())));
 				}
-
+				
 			}
 			if (true) {
-				returnVal += (this.pNoStep * (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y)
-						.getMyVal())));
-
+				returnVal += (this.pNoStep
+						* (this.getReward(copyScape.get(x).get(y).getMyField()) + (this.discountFact * copyScape.get(x).get(y).getMyVal())));
+						
 			}
 			thisOne.setActionDown(returnVal);
 		}
-
+		
 	}
-
+	
 	/**
 	 * Sets most parameters (except for the landscape, its width and height) to
 	 * their default value
 	 */
 	public void defaultSettings() {
-
+		
 		this.initXPos = 7;
 		this.initYPos = 6;
 		this.waittime = 500;
 		this.actionsCounter = 0;
-
+		
 		this.xPosition = this.initXPos;
 		this.yPosition = this.initYPos;
-
+		
 		this.posReward = 1;
 		this.negReward = -1;
 		this.noReward = -0.05;
 		this.discountFact = 0.5;
 		this.minChange = 0.001;
-
+		
 		this.showProgress = true;
 		this.isDeterministic = false;
 		this.terminated = false;
-
+		
 		if (this.isDeterministic) {
 			this.pPerform = 1;
 			this.pSidestep = 0;
@@ -386,7 +386,7 @@ public class MarkovDecisionProblem {
 			this.pNoStep = 0;
 		}
 	}
-
+	
 	/**
 	 * Executes the given action as is
 	 * (i.e. translates Action to an actual function being performed)
@@ -409,7 +409,7 @@ public class MarkovDecisionProblem {
 				break;
 		}
 	}
-
+	
 	/**
 	 * Draws this MDP. If showProgress is set to true called by MDP every time
 	 * something changes.
@@ -426,7 +426,7 @@ public class MarkovDecisionProblem {
 				e.printStackTrace();
 			}
 		}
-
+		
 		// (2) repaint
 		if (this.frame == null) {
 			this.frame = new DrawFrame(this);
@@ -438,7 +438,7 @@ public class MarkovDecisionProblem {
 			this.frame.repaint();
 		}
 	}
-
+	
 	/**
 	 * Returns the number of actions that has been performed since the last
 	 * (re)start.
@@ -448,7 +448,7 @@ public class MarkovDecisionProblem {
 	public int getActionsCounter() {
 		return this.actionsCounter;
 	}
-
+	
 	/**
 	 * Returns the field with the given x and y coordinates
 	 *
@@ -468,7 +468,7 @@ public class MarkovDecisionProblem {
 			return Field.OUTOFBOUNDS;
 		}
 	}
-
+	
 	public FieldPlusVal getFieldPlusVal(int xpos, int ypos) {
 		if ( (xpos >= 0) && (xpos < this.width) && (ypos >= 0) && (ypos < this.height)) {
 			// return landscape[xpos][ypos];
@@ -476,12 +476,12 @@ public class MarkovDecisionProblem {
 		}
 		else {
 			System.err.println("ERROR:MDP:getField:you request a field that does not exist!");
-
+			
 			FieldPlusVal errorField = new FieldPlusVal(Field.OUTOFBOUNDS, 0, 0, 0, 0, 0);
 			return errorField;
 		}
 	}
-
+	
 	/**
 	 * Returns the height of the landscape
 	 *
@@ -490,7 +490,7 @@ public class MarkovDecisionProblem {
 	public int getHeight() {
 		return this.height;
 	}
-
+	
 	/**
 	 * Returns the reward the field in which the agent currently is yields
 	 *
@@ -502,7 +502,7 @@ public class MarkovDecisionProblem {
 		if (this.terminated) {
 			return 0;
 		}
-
+		
 		// switch (landscape[xPosition][yPosition]) {
 		switch (this.landscape.get(this.xPosition).get(this.yPosition).getMyField()) {
 			case EMPTY:
@@ -518,9 +518,9 @@ public class MarkovDecisionProblem {
 				System.err.println("ERROR: MDP: getReward(): agent is not in an empty, reward or negreward field...");
 				return 0;
 		}
-
+		
 	}
-
+	
 	/**
 	 * Returns the reward for a given field
 	 *
@@ -537,9 +537,9 @@ public class MarkovDecisionProblem {
 			default:
 				return 0;
 		}
-
+		
 	}
-
+	
 	/**
 	 * Returns the x-position of the current state
 	 *
@@ -548,7 +548,7 @@ public class MarkovDecisionProblem {
 	public int getStateXPosition() {
 		return this.xPosition;
 	}
-
+	
 	/**
 	 * Returns the y-position of the current state
 	 *
@@ -557,7 +557,7 @@ public class MarkovDecisionProblem {
 	public int getStateYPostion() {
 		return this.yPosition;
 	}
-
+	
 	/**
 	 * Returns the width of the landscape
 	 *
@@ -566,11 +566,11 @@ public class MarkovDecisionProblem {
 	public int getWidth() {
 		return this.width;
 	}
-
+	
 	// ///////////////////////////////////////////////////////
 	// / SETTERS
 	// ///////////////////////////////////////////////////////
-
+	
 	public void initField() {
 		for (int i = 0; i < this.width; i++ ) {
 			ArrayList<FieldPlusVal> temp = new ArrayList<>();
@@ -581,7 +581,7 @@ public class MarkovDecisionProblem {
 			}
 		}
 	}
-
+	
 	/**
 	 * Returns if this MDP is deterministic or stochastic
 	 *
@@ -590,7 +590,7 @@ public class MarkovDecisionProblem {
 	public boolean isDeterministic() {
 		return this.isDeterministic;
 	}
-
+	
 	/**
 	 * sets the default state for the agent (used in restart() )
 	 *
@@ -601,7 +601,7 @@ public class MarkovDecisionProblem {
 	// this.initXPos = xpos;
 	// this.initYPos = ypos;
 	// }
-
+	
 	/**
 	 * Returns if the MDP has been terminated (i.e. a final state has been
 	 * reached)
@@ -611,7 +611,7 @@ public class MarkovDecisionProblem {
 	public boolean isTerminated() {
 		return this.terminated;
 	}
-
+	
 	/**
 	 * Moves the agent down (if possible).
 	 */
@@ -620,9 +620,9 @@ public class MarkovDecisionProblem {
 		if ( (this.yPosition > 0) && (this.landscape.get(this.xPosition).get(this.yPosition - 1).getMyField() != Field.OBSTACLE)) {
 			this.yPosition-- ;
 		}
-
+		
 	}
-
+	
 	/**
 	 * Moves the agent left (if possible).
 	 */
@@ -631,9 +631,9 @@ public class MarkovDecisionProblem {
 		if ( (this.xPosition > 0) && (this.landscape.get(this.xPosition - 1).get(this.yPosition).getMyField() != Field.OBSTACLE)) {
 			this.xPosition-- ;
 		}
-
+		
 	}
-
+	
 	/**
 	 * Moves the agent right (if possible).
 	 */
@@ -642,9 +642,9 @@ public class MarkovDecisionProblem {
 		if ( (this.xPosition < (this.width - 1)) && (this.landscape.get(this.xPosition + 1).get(this.yPosition).getMyField() != Field.OBSTACLE)) {
 			this.xPosition++ ;
 		}
-
+		
 	}
-
+	
 	/**
 	 * Moves the agent up (if possible).
 	 */
@@ -653,13 +653,13 @@ public class MarkovDecisionProblem {
 		if ( (this.yPosition < (this.height - 1)) && (this.landscape.get(this.xPosition).get(this.yPosition + 1).getMyField() != Field.OBSTACLE)) {
 			this.yPosition++ ;
 		}
-
+		
 	}
-
+	
 	// ///////////////////////////////////////////////////////
 	// / GETTERS
 	// ///////////////////////////////////////////////////////
-
+	
 	/**
 	 * Private method used to have this MDP draw itself only if it should show
 	 * its progress.
@@ -669,7 +669,7 @@ public class MarkovDecisionProblem {
 			this.drawMDP();
 		}
 	}
-
+	
 	/**
 	 * Performs the given action and returns the reward that action yielded.
 	 * However, keep in mind that, if this MDP is non-deterministic, the given
@@ -705,7 +705,7 @@ public class MarkovDecisionProblem {
 		this.pDrawMDP();
 		return this.getReward();
 	}
-
+	
 	/**
 	 * sets the agent back to its default state and sets terminated to false.
 	 */
@@ -718,14 +718,14 @@ public class MarkovDecisionProblem {
 		this.defaultSettings();
 		this.pDrawMDP();
 	}
-
+	
 	/**
 	 * makes this MDP deterministic or stochastically
 	 */
 	public void setDeterministic(boolean isDeterministic) {
 		this.isDeterministic = isDeterministic;
 	}
-
+	
 	/**
 	 * Sets the field with the given x and y coordinate to the given field.
 	 * Updates the visual display.
@@ -747,7 +747,7 @@ public class MarkovDecisionProblem {
 		}
 		this.pDrawMDP();
 	}
-
+	
 	/**
 	 * Setter to set the reward given when a Field.NEGREWARD is reached
 	 *
@@ -756,7 +756,7 @@ public class MarkovDecisionProblem {
 	public void setNegReward(double negReward) {
 		this.negReward = negReward;
 	}
-
+	
 	/**
 	 * Setter to set the reward given when a Field.EMPTY is reached
 	 *
@@ -765,7 +765,7 @@ public class MarkovDecisionProblem {
 	public void setNoReward(double noReward) {
 		this.noReward = noReward;
 	}
-
+	
 	/**
 	 * Setter to set the reward given when a Field.REWARD is reached
 	 *
@@ -774,7 +774,7 @@ public class MarkovDecisionProblem {
 	public void setPosReward(double posReward) {
 		this.posReward = posReward;
 	}
-
+	
 	/**
 	 * Setter to set the probabilities for all (mis)interpretations of a
 	 * to-be-performed action.
@@ -803,11 +803,11 @@ public class MarkovDecisionProblem {
 		this.pBackstep = pBackstep / total;
 		this.pNoStep = pNoStep / total;
 	}
-
+	
 	// ///////////////////////////////////////////////////////
 	// / DISPLAY STUFF
 	// ///////////////////////////////////////////////////////
-
+	
 	/**
 	 * Setter to enable/disable the showing of the progress on the display
 	 *
@@ -816,7 +816,7 @@ public class MarkovDecisionProblem {
 	public void setShowProgress(boolean show) {
 		this.showProgress = show;
 	}
-
+	
 	/**
 	 * Moves the agent to the given state (x and y coordinate)
 	 *
@@ -828,7 +828,7 @@ public class MarkovDecisionProblem {
 		this.yPosition = ypos;
 		this.pDrawMDP();
 	}
-
+	
 	public void setStateValues() {
 		// for each position:
 		// look up/down/left/right, update respective actionval (Q(s,a)
@@ -841,7 +841,7 @@ public class MarkovDecisionProblem {
 		do {
 			maxChange = 0;
 			// ArrayList<ArrayList<FieldPlusVal>> copyScape = new ArrayList<ArrayList<FieldPlusVal>>(this.landscape);
-
+			
 			ArrayList<ArrayList<FieldPlusVal>> copyScape = new ArrayList<ArrayList<FieldPlusVal>>();
 			for (ArrayList<FieldPlusVal> a : this.landscape) {
 				ArrayList<FieldPlusVal> temp = new ArrayList<FieldPlusVal>();
@@ -852,7 +852,7 @@ public class MarkovDecisionProblem {
 				}
 				copyScape.add(temp);
 			}
-
+			
 			for (int x = 0; x < this.width; x++ ) {
 				for (int y = 0; y < this.height; y++ ) {
 					FieldPlusVal theOne = this.landscape.get(x).get(y);
@@ -871,7 +871,7 @@ public class MarkovDecisionProblem {
 					else if (theOne.getMyField().equals(Field.OBSTACLE) || theOne.getMyField().equals(Field.OUTOFBOUNDS)) {
 						theOne.setMyVal(0);
 					}
-
+					
 				}
 			}
 			// for (int x = 0; x < this.width; x++ ) {
@@ -898,9 +898,9 @@ public class MarkovDecisionProblem {
 			count++ ;
 			System.out.println("\ncount: " + count + "\n");
 		} while ( (maxChange >= this.minChange) && (count < 10));
-
+		
 	}
-
+	
 	/**
 	 * Setter to set the speed with which the display is updated at maximum
 	 *
@@ -915,10 +915,10 @@ public class MarkovDecisionProblem {
 			System.err.println("ERROR:MDP:setWaittime: no negative waittime alowed.");
 		}
 	}
-
+	
 	// actions not necessary, can try any in action thing.
 	public void tryAction(Field curState, Object knowledge) {
 		// if (walkinwall, penalty, etc)
-
+		
 	}
 }
