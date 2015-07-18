@@ -1,0 +1,97 @@
+put x/y position in FPV
+
+
+
+
+
+
+
+
+
+
+	/**
+	 * Sets the field with the given x and y coordinate to the given field.
+	 * Updates the visual display.
+	 *
+	 * @param xpos
+	 * @param ypos
+	 * @param field
+	 */
+	public void setField(int xpos, int ypos, Field field) {
+		if ( (xpos >= 0) && (xpos < this.width) && (ypos >= 0) && (ypos < this.height)) {
+			// landscape[xpos][ypos] = field;
+			this.landscape.get(xpos).get(ypos).setMyField(field);
+			if (field == Field.NEGREWARD) {
+				this.landscape.get(xpos).get(ypos).setMyVal(this.negReward);
+			}
+			else if (field == Field.REWARD) {
+				this.landscape.get(xpos).get(ypos).setMyVal(this.posReward);
+			}
+		}
+		this.pDrawMDP();
+	}
+	
+	/**
+	 * Setter to set the probabilities for all (mis)interpretations of a
+	 * to-be-performed action.
+	 * The given probabilities should add up to 1.
+	 *
+	 * @param pPerform
+	 *            , the probability an action is performed as is (e.g. UP is
+	 *            executed as UP)
+	 * @param pSidestep
+	 *            , the probability a sidestep is performed (e.g. UP is executed
+	 *            as LEFT or RIGHT)
+	 * @param pBackstep
+	 *            , the probability a backstep is performed (e.g. UP is executed
+	 *            as DOWN)
+	 * @param pNoStep
+	 *            , the probability an action is not performed at all (e.g. UP
+	 *            is not executed)
+	 */
+	public void setProbsStep(double pPerform, double pSidestep, double pBackstep, double pNoStep) {
+		double total = pPerform + pSidestep + pBackstep + pNoStep;
+		if (total == 1.0) {
+			System.err.println("ERROR: MDP: setProbsStep: given probabilities do not add up to 1. I will normalize to compensate.");
+		}
+		this.pPerform = pPerform / total;
+		this.pSidestep = pSidestep / total;
+		this.pBackstep = pBackstep / total;
+		this.pNoStep = pNoStep / total;
+	}
+	
+	/**
+	 * makes this MDP deterministic or stochastically
+	 */
+	public void setDeterministic(boolean isDeterministic) {
+		this.isDeterministic = isDeterministic;
+	}
+	
+		/**
+	 * Returns if this MDP is deterministic or stochastic
+	 *
+	 * @return
+	 */
+	public boolean isDeterministic() {
+		return this.isDeterministic;
+	}
+	
+		/**
+	 * Returns if the MDP has been terminated (i.e. a final state has been
+	 * reached)
+	 *
+	 * @return
+	 */
+	public boolean isTerminated() {
+		return this.terminated;
+	}
+	
+	public void setShowProgress(boolean show) {
+		this.showProgress = show;
+	}
+	
+	public void setState(int xpos, int ypos) {
+		this.xPosition = xpos;
+		this.yPosition = ypos;
+		this.pDrawMDP();
+	}

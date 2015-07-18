@@ -6,7 +6,7 @@ package nl.ru.ai.vroon.mdp;
  * @author Jered Vroon
  */
 public class Main {
-
+	
 	/**
 	 * @param args
 	 *            , not used
@@ -17,21 +17,16 @@ public class Main {
 		// for (int i = 0; i < 5; i++ ) {
 		// mdp.bestAction();
 		// // mdp.performAction(Action.UP);
-		// // mdp.performAction(Action.UP);
-		// // mdp.performAction(Action.UP);
-		// // mdp.performAction(Action.UP);
 		// mdp.restart();
 		// }
-
+		
 		MarkovDecisionProblem mdp2 = new MarkovDecisionProblem(10, 10);
-		for (int i = 0; i < 5; i++ ) {
-			mdp2.bestAction();
+		for (int i = 0; i < 1000; i++ ) {
+			// mdp2.bestAction();
+			mdp2.Qlearn();
 			// mdp2.performAction(Action.UP);
-			// mdp2.performAction(Action.RIGHT);
-			// mdp2.performAction(Action.DOWN);
-			// mdp2.performAction(Action.LEFT);
 			mdp2.restart();
 		}
-
+		
 	}
 }
