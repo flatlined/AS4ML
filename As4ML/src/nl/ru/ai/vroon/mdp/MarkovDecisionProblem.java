@@ -1,6 +1,8 @@
 package nl.ru.ai.vroon.mdp;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.ListIterator;
 import java.util.Random;
 
 import javax.swing.JFrame;
@@ -34,10 +36,12 @@ public class MarkovDecisionProblem {
 	private double	gamma;
 	private double	alpha;
 	private double	minChange;
+	private double	certainty	= 0.3;
 	
-	private boolean	showProgress;
-	private boolean	isDeterministic;
-	private boolean	terminated;
+	private boolean		showProgress;
+	private boolean		isDeterministic;
+	private boolean		terminated;
+	LinkedList<Integer>	totalSteps	= new LinkedList<Integer>();
 	
 	public MarkovDecisionProblem() {
 		this.defaultSettings();
@@ -85,23 +89,56 @@ public class MarkovDecisionProblem {
 	}
 	
 	public Action pickAction(FieldPlusVal theOne) {
-		if (rand.nextDouble() > 0.3) {
+		if (rand.nextDouble() < this.certainty) {
 			return theOne.getActionPolicy();
 		}
 		else {
-			int index = rand.nextInt(4);
-			if (index == 0) {
-				return Action.LEFT;
+			int index = rand.nextInt(3);
+			if (theOne.getActionPolicy().equals(Action.LEFT)) {
+				if (index == 0) {
+					return Action.RIGHT;
+				}
+				else if (index == 1) {
+					return Action.UP;
+				}
+				else {
+					return Action.DOWN;
+				}
 			}
-			else if (index == 1) {
-				return Action.RIGHT;
+			else if (theOne.getActionPolicy().equals(Action.RIGHT)) {
+				if (index == 0) {
+					return Action.LEFT;
+				}
+				else if (index == 1) {
+					return Action.UP;
+				}
+				else {
+					return Action.DOWN;
+				}
 			}
-			else if (index == 2) {
-				return Action.UP;
+			else if (theOne.getActionPolicy().equals(Action.UP)) {
+				if (index == 0) {
+					return Action.LEFT;
+				}
+				else if (index == 1) {
+					return Action.RIGHT;
+				}
+				else {
+					return Action.DOWN;
+				}
 			}
 			else {
-				return Action.DOWN;
+				if (index == 0) {
+					return Action.LEFT;
+				}
+				else if (index == 1) {
+					return Action.RIGHT;
+				}
+				else {
+					return Action.UP;
+				}
 			}
+			
 		}
 	}
 	
@@ -115,49 +152,58 @@ public class MarkovDecisionProblem {
 	}
 	
 	public void Qlearn() {
-		// initialize curFPV to current FieldPlusVal. start position
+		
 		FieldPlusVal curFPV = this.landscape.get(this.xPosition).get(this.yPosition);
-		// loop until goal is reached
 		while ( !curFPV.getMyField().equals(Field.REWARD) && ! (curFPV.getMyField().equals(Field.NEGREWARD))) {
-			// Select one among all possible actions for the current state
-			// Selection strategy is random in this example
 			FieldPlusVal oldFPV = this.landscape.get(this.xPosition).get(this.yPosition);
 			StateActionReward performed = this.performAction(this.pickAction(curFPV));
 			curFPV = this.landscape.get(this.xPosition).get(this.yPosition);
-			double curQ;
+			double curQ; // current Q value for current state/action
 			double newQ;
+			// ^ calculate the new Q value below: newQ(s,a)= oldQ(s,a) + alpha * (R(s,a) + gamma * Max(next state, all actions) - oldQ(s,a))
 			if (performed.getAction().equals(Action.LEFT)) {
-				curQ = oldFPV.getActionLeft(); // current Q value for current state/action
+				curQ = oldFPV.getActionLeft();
 				newQ = curQ + (this.alpha * ( (performed.getReward() + (this.gamma * curFPV.getMyVal())) - curQ));
-				// ^ calculated the new Q value: newQ(s,a)= oldQ(s,a) + alpha * (R(s,a) + gamma * Max(next state, all actions) - oldQ(s,a))
+				
 				oldFPV.setActionLeft(newQ);
 			}
 			else if (performed.getAction().equals(Action.RIGHT)) {
-				curQ = oldFPV.getActionRight(); // current Q value for current state/action
+				curQ = oldFPV.getActionRight();
 				newQ = curQ + (this.alpha * ( (performed.getReward() + (this.gamma * curFPV.getMyVal())) - curQ));
 				oldFPV.setActionRight(newQ);
 			}
 			else if (performed.getAction().equals(Action.UP)) {
-				curQ = oldFPV.getActionUp(); // current Q value for current state/action
+				curQ = oldFPV.getActionUp();
 				newQ = curQ + (this.alpha * ( (performed.getReward() + (this.gamma * curFPV.getMyVal())) - curQ));
 				oldFPV.setActionUp(newQ);
 			}
 			else {
-				curQ = oldFPV.getActionDown(); // current Q value for current state/action
+				curQ = oldFPV.getActionDown();
 				newQ = curQ + (this.alpha * ( (performed.getReward() + (this.gamma * curFPV.getMyVal())) - curQ));
 				oldFPV.setActionDown(newQ);
 			}
 			
-			// now calc new V and policy
 			curFPV.setActionPolicy();
 			
-			// System.out.println("A:" + performed.getAction() + " Begin:" + oldFPV.getX() + "/" + oldFPV.getY() + " End:" + curFPV.getX() + "/"
-			// + curFPV.getY() + " Reward:" + performed.getReward() + " oldQ:" + curQ + " newQ:" + newQ);
-			
-			// Using this possible action, consider to go to the next state
-			
-			// Set the next state as the current state
 		}
+		// takes the average of the past 3 runs. Unfortunately including the current one
+		this.totalSteps.add(this.actionsCounter);
+		while (this.totalSteps.size() > 3) {
+			this.totalSteps.removeFirst();
+		}
+		int averageSteps = 0;
+		
+		for (int i = 0; i < this.totalSteps.size(); i++ ) {
+			int nextInt = this.totalSteps.get(i);
+			averageSteps += nextInt;
+		}
+		averageSteps /= this.totalSteps.size();
+		if ( (this.certainty < 0.9) && (this.actionsCounter < averageSteps)) {
+			this.certainty += 0.0025;
+			for (int i = 0; i < this.totalSteps.size(); i++ ) {
+			}
+		}
+		
 		// Thread.currentThread();
 		// try {
 		// Thread.sleep(800);
@@ -165,56 +211,9 @@ public class MarkovDecisionProblem {
 		// catch (InterruptedException e) {
 		// e.printStackTrace();
 		// }
-		// System.out.println(this.landscape.get(2).get(2).getActionPolicy());
 	}
 	
-	// void run() {
-	// /*
-	// * 1. Set parameter , and environment reward matrix R
-	// * 2. Initialize matrix Q as zero matrix
-	// * 3. For each episode: Select random initial state
-	// * Do while not reach goal state o
-	// * Select one among all possible actions for the current state o
-	// * Using this possible action, consider to go to the next state o
-	// * Get maximum Q value of this next state based on all possible actions o
-	// * Compute o Set the next state as the current state
-	// */
-	//
-	// // For each episode
-	// Random rand = new Random();
-	// for (int i = 0; i < 1000; i++ ) { // train episodes
-	// // Select random initial state
-	// int state = rand.nextInt(this.statesCount);
-	// while (state != this.stateC) // goal state
-	// {
-	// // Select one among all possible actions for the current state
-	// int[] actionsFromState = this.actions[state];
-	//
-	// // Selection strategy is random in this example
-	// int index = rand.nextInt(actionsFromState.length);
-	// int action = actionsFromState[index];
-	//
-	// // Action outcome is set to deterministic in this example
-	// // Transition probability is 1
-	// int nextState = action; // data structure
-	//
-	// // Using this possible action, consider to go to the next state
-	// double q = this.Q(state, action);
-	// double maxQ = this.maxQ(nextState);
-	// int r = this.R(state, action);
-	//
-	// double value = q + (this.alpha * ( (r + (this.gamma * maxQ)) - q));
-	// this.setQ(state, action, value);
-	//
-	// // Set the next state as the current state
-	// state = nextState;
-	// }
-	// }
-	// }
-	
 	public void calcQ(ArrayList<ArrayList<FieldPlusVal>> copyScape, FieldPlusVal thisOne) {
-		// System.out.println("L:" + thisOne.getActionLeft() + "R:" + thisOne.getActionRight() + "U:" + thisOne.getActionUp() + "D:"
-		// + thisOne.getActionDown());
 		if ( !thisOne.getMyField().equals(Field.EMPTY)) {
 			thisOne.setActionUp(0);
 			thisOne.setActionDown(0);
@@ -724,7 +723,7 @@ public class MarkovDecisionProblem {
 	}
 	
 	public void restart() {
-		System.out.println(this.actionsCounter);
+		System.out.println(this.actionsCounter + " . " + this.certainty);
 		this.defaultSettings();
 		this.pDrawMDP();
 	}
