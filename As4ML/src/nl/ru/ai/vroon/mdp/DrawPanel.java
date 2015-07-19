@@ -6,11 +6,6 @@ import java.awt.Graphics2D;
 
 import javax.swing.JPanel;
 
-/**
- * Creates visual content in accordance with the given MDP
- *
- * @author Sjoerd Lagarde + some adaptations by Jered Vroon
- */
 public class DrawPanel extends JPanel {
 	
 	private static final long		serialVersionUID	= 1L;
@@ -18,13 +13,6 @@ public class DrawPanel extends JPanel {
 	private int						screenHeight;
 	private MarkovDecisionProblem	mdp;
 	
-	/**
-	 * Constructor
-	 *
-	 * @param mdp
-	 * @param screenWidth
-	 * @param screenHeight
-	 */
 	public DrawPanel(MarkovDecisionProblem mdp, int screenWidth, int screenHeight) {
 		this.mdp = mdp;
 		this.screenWidth = screenWidth;
@@ -33,7 +21,7 @@ public class DrawPanel extends JPanel {
 	
 	@Override
 	public void paintComponent(Graphics g) {
-		this.setBackground(new Color(255, 255, 255)); 	// White background
+		this.setBackground(new Color(255, 255, 255));
 		super.paintComponent(g);
 		
 		int stepSizeX = this.screenWidth / this.mdp.getWidth();

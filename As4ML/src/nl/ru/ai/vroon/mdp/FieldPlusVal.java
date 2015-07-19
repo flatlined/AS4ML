@@ -47,6 +47,14 @@ public class FieldPlusVal {
 		return this.myVal;
 	}
 	
+	public int getX() {
+		return this.x;
+	}
+	
+	public int getY() {
+		return this.y;
+	}
+	
 	public double maxAct() {
 		return Math.max(Math.max(this.actionLeft, this.actionRight), Math.max(this.actionUp, this.actionDown));
 	}
@@ -93,6 +101,14 @@ public class FieldPlusVal {
 		this.myVal = val;
 	}
 	
+	public void setX(int x) {
+		this.x = x;
+	}
+	
+	public void setY(int y) {
+		this.y = y;
+	}
+	
 	@Override
 	public String toString() {
 		return "x/y:" + this.x + "/" + this.y + " Val: " + this.myVal + " Up:" + this.actionUp + " Dn:" + this.actionDown + " Lt:" + this.actionLeft
@@ -101,22 +117,6 @@ public class FieldPlusVal {
 	
 	public void updatemyVal() {
 		this.myVal = this.maxAct();
-	}
-	
-	public int getX() {
-		return this.x;
-	}
-	
-	public void setX(int x) {
-		this.x = x;
-	}
-	
-	public int getY() {
-		return this.y;
-	}
-	
-	public void setY(int y) {
-		this.y = y;
 	}
 	
 }

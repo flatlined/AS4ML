@@ -1,13 +1,9 @@
 package nl.ru.ai.vroon.mdp;
 
 import java.awt.Container;
+
 import javax.swing.JFrame;
 
-/**
- * Draws the given MDP.
- *
- * @author Sjoerd Lagarde + some adaptations by Jered Vroon
- */
 public class DrawFrame extends JFrame {
 	
 	private static final long		serialVersionUID	= 1L;
@@ -15,11 +11,6 @@ public class DrawFrame extends JFrame {
 	private int						height				= 800;
 	private MarkovDecisionProblem	mdp;
 	
-	/**
-	 * Constructor.
-	 *
-	 * @param mdp
-	 */
 	public DrawFrame(MarkovDecisionProblem mdp) {
 		this.mdp = mdp;
 		this.width = mdp.getWidth() * 50;
@@ -30,9 +21,6 @@ public class DrawFrame extends JFrame {
 		this.drawContent();
 	}
 	
-	/**
-	 * Adds the content to the frame:
-	 */
 	public void drawContent() {
 		DrawPanel panel = new DrawPanel(this.mdp, this.width, this.height);
 		Container contentPane = this.getContentPane();

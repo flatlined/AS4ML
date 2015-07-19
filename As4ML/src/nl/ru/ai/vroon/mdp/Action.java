@@ -1,15 +1,7 @@
 package nl.ru.ai.vroon.mdp;
 
-/**
- * Enumerates the actions possible within a MDP
- *
- * @author Jered Vroon
- */
 public enum Action {
-	UP,		// i.e. go to the field above
-	DOWN,	// i.e. go to the field below
-	LEFT,	// i.e. go to the field to the left
-	RIGHT;	// i.e. go to the field to the right
+	UP, DOWN, LEFT, RIGHT;
 	
 	public static Action backAction(Action in) {
 		switch (in) {
